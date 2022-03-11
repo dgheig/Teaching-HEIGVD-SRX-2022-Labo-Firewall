@@ -129,15 +129,31 @@ _Lors de la définition d'une zone, spécifier l'adresse du sous-réseau IP avec
 
 **LIVRABLE : Remplir le tableau**
 
-| Adresse IP source | Adresse IP destination | Type | Port src | Port dst | Action |
-| :---:             | :---:                  | :---:| :------: | :------: | :----: |
-|                   |                        |      |          |          |        |
-|                   |                        |      |          |          |        |
-|                   |                        |      |          |          |        |
-|                   |                        |      |          |          |        |
-|                   |                        |      |          |          |        |
-|                   |                        |      |          |          |        |
-|                   |                        |      |          |          |        |
+|   Adresse IP source    | Adresse IP destination  |         Type          | Port src | Port dst | Action |
+| :--------------------: | :---------------------: | :-------------------: | :------: | :------: | :----: |
+| 192.168.100.0/24 (LAN) |       172.20.10.2       |          TCP          |    *     |    53    | Accept |
+| 192.168.100.0/24 (LAN) |       172.20.10.2       |         UDP/          |    *     |    53    | Accept |
+| 192.168.100.0/24 (LAN) | 192.168.200.0/24 (DMZ)  | ICMP Request (type 8) |          |          | Accept |
+| 192.168.200.0/24 (DMZ) | 192.168.100.0/24 (LAN)  |  ICMP Reply (type 0)  |          |          | Accept |
+| 192.168.100.0/24 (LAN) |    172.20.10.2(WAN)     | ICMP Request (type 8) |          |          | Accept |
+|    172.20.10.2(WAN)    | 192.168.100.0/24 (LAN)  |  ICMP Reply (type 0)  |          |          | Accept |
+| 192.168.100.0/24 (LAN) |    172.20.10.2(WAN)     |         ICMP          |    *     |   0,8    | Accept |
+|    172.20.10.2(WAN)    | 192.168.100.0/24 (LAN)  |         ICMP          |    *     |   0,8    | Accept |
+| 192.168.100.0/24 (LAN) |    172.20.10.2(WAN)     |       HTTP(TCP)       |    *     |    80    | Accept |
+| 192.168.100.0/24 (LAN) |    172.20.10.2(WAN)     |       HTTP(TCP)       |    *     |   8080   | Accept |
+| 192.168.100.0/24 (LAN) |    172.20.10.2(WAN)     |      HTTPS(TCP)       |    *     |   443    | Accept |
+| 192.168.100.0/24 (LAN) | 192.168.200.0/24 (DMZ)  |          TCP          |    *     |    80    | Accept |
+| 192.168.200.0/24 (WAN) | 192.168.200.0/24 (DMZ)  |          TCP          |    *     |    80    | Accept |
+| 192.168.100.0/24 (LAN) | 192.168.200.0/24 (DMZ)  |       SSH(TCP)        |    *     |    22    | Accept |
+| 192.168.100.0/24 (LAN) | 192.168.100.2(Firewall) |       SSH(TCP)        |    *     |    22    | Accept |
+|       0.0.0.0/0        |        0.0.0.0/0        |           *           |    *     |    *     |  Deny  |
+
+Nb:
+
+* [ICMP n'a pas de ports](https://networkengineering.stackexchange.com/questions/37896/ping-port-number), il y a des [types](https://fr.wikipedia.org/wiki/Internet_Control_Message_Protocol)
+* Par simplicité, au lieu de faire 2 lignes avec juste le type qui change, un "/" est utilisé. Pour les ports, la notation de nmap est utilisé ("," pour la combinaison, "-" pour une range de port).
+
+* Normalement, un firewall permet de définir plusieurs ports en 1 seul commande. Potentiellement, il permet de définir plusieurs types de packets en une commande aussi.
 
 ---
 
@@ -418,14 +434,14 @@ LIVRABLE : Commandes nftables
 
 ```bash
 ping 8.8.8.8
-``` 	            
+```
 Faire une capture du ping.
 
 Vérifiez aussi la route entre votre client et le service `8.8.8.8`. Elle devrait partir de votre client et traverser votre Firewall :
 
 ```bash
 traceroute 8.8.8.8
-``` 	            
+```
 
 
 ---
