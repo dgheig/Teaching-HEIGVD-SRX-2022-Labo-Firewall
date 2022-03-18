@@ -1,5 +1,7 @@
 version: '3.7'
 
+# docker ps -f 'label=SRX'
+
 services:
     firewall:
         privileged: true
@@ -24,6 +26,8 @@ services:
             net.ipv4.conf.all.send_redirects: 0
             net.ipv4.conf.all.secure_redirects: 0
             net.ipv4.conf.all.accept_redirects: 0
+        labels:
+        - "SRX="
 
     client_in_lan:
         privileged: true
@@ -43,6 +47,8 @@ services:
             net.ipv4.conf.all.send_redirects: 0
             net.ipv4.conf.all.secure_redirects: 0 
             net.ipv4.conf.all.accept_redirects: 0
+        labels:
+        - "SRX="
 
     server_in_dmz:
         privileged: true
@@ -62,6 +68,8 @@ services:
             net.ipv4.conf.all.send_redirects: 0
             net.ipv4.conf.all.secure_redirects: 0 
             net.ipv4.conf.all.accept_redirects: 0
+        labels:
+        - "SRX="
         
 
 networks:
@@ -73,6 +81,8 @@ networks:
                 - 
                  subnet: 192.168.100.0/24
                  #gateway: 192.168.100.2
+        labels:
+        - "SRX="
     2dmz:
         driver: "bridge"
         name: 2dmz
@@ -81,6 +91,8 @@ networks:
                 - 
                  subnet: 192.168.200.0/24
                  #gateway: 192.168.200.2
+        labels:
+        - "SRX="
     0wan:
         driver: "bridge"
         name: 0wan
@@ -88,3 +100,5 @@ networks:
             config:
                 -
                  subnet: 172.20.10.0/24
+        labels:
+        - "SRX="
