@@ -342,6 +342,18 @@ nft 'add chain nat postrouting { type nat hook postrouting priority 100 ; }'
 nft add rule nat postrouting meta oifname "eth0" masquerade
 ```
 
+
+
+```bash
+docker exec -i Firewall /bin/bash <<- EOF
+nft add table nat
+nft 'add chain nat postrouting { type nat hook postrouting priority 100 ; }'
+nft add rule nat postrouting meta oifname "eth0" masquerade
+EOF
+```
+
+
+
 La dernière commande `nftables` définit une règle dans le tableau NAT qui permet la redirection de ports et donc, l'accès à l'Internet pour les deux autres machines à travers l'interface eth0 qui est connectée au WAN.
 
 
@@ -352,7 +364,7 @@ La dernière commande `nftables` définit une règle dans le tableau NAT qui per
 
 ---
 
-**Réponse :**
+**Réponse :**  NFT ne possède pas de tables par défaut, il faut donc les créer manuellement. Ici on crée la table "nat".
 
 ---
 
@@ -365,10 +377,21 @@ La dernière commande `nftables` définit une règle dans le tableau NAT qui per
 
 **Réponse :**
 
+* nft: commande pour configurer netfilter
+* add chain: indique que l'on veut ajouter une chaine
+* nat: indique la table à laquelle ajouter la chaine.
+* postrouting: nom de la chain
+* {...}: les options
+  * type nat: indique qu'il s'agit d'une chaine de NAT
+  * hook postrouting: indique que cela concerne le [hook](https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks) postrouting
+  * priority 100: the priority of the chain
+
+Nb: le [Wiki de nftables](https://wiki.nftables.org/wiki-nftables/index.php/Configuring_chains) est très bien expliqué.
+
 ---
 
 
-Cette autre commande démarre le service SSH du serveur :
+Cette autre commande démarre le service SSH du serveur (Firewall):
 
 ```bash
 service ssh start
@@ -399,7 +422,21 @@ Chaque règle doit être tapée sur une ligne séparée. Référez-vous à la th
 
 ---
 
-**Réponse :**
+**Réponse :** Il faut que les commandes soient relancée à chaque redémarrage. Pour cela il y a plusieurs façon de le faire (e.g script manuelle ou avec un "init system" comme systemd). Le plus simple, et recommandé, est d'utiliser le service `nftables`:
+
+1. Exporter sa configuration actuelle
+
+   ```bash
+   sudo nft list ruleset > /etc/nftables.conf
+   ```
+
+2. Activer le service
+
+   ```bash
+   sudo systemctl enable nftables  # Enable: le service démarrera automatiquement au boot
+   ```
+
+   
 
 ---
 
@@ -414,31 +451,39 @@ Chaque règle doit être tapée sur une ligne séparée. Référez-vous à la th
 
 ---
 
-**Réponse :**
+**Réponse :** La commande est `nft list ruleset`
+
+![list_ruleset](img/list_ruleset.png)
 
 ---
-
 
 <ol type="a" start="6">
-  <li>Quelle commande est utilisée pour effacer toutes les règles de filtrage en vigueur ?
+  <li>Quelle commande est utilisée pour effacer toutes les règles en vigueur ? (retiré "de filtrage" suite à explication du professeur)
   </li>                                  
 </ol>
 
----
-
-**Réponse :**
 
 ---
 
+**Réponse** : La commande est `nft flush ruleset`
+
+![flush_ruleset](img/flush_ruleset.png)
+
+---
 
 <ol type="a" start="7">
-  <li>Quelle commande est utilisée pour effacer les chaines ?
+  <li>Quelle commande est utilisée pour effacer une chaine ? (corrigé "les chaines" -> "une chaine")
   </li>                                  
 </ol>
 
+
 ---
 
-**Réponse :**
+**Réponse :** la commande est `nft delete chain [family] {table} {chain}`
+
+![delete_chain](img/delete_chain.png)
+
+
 
 ---
 
