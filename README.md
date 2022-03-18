@@ -219,6 +219,12 @@ docker exec -it Firewall /bin/bash
 
 Vous pouvez bien évidemment lancer des terminaux avec les trois machines en même temps !
 
+Tips: Comme mon environnement docker contient d'autres machines, j'ai rajouté un label "SRX=" aux containers et réseau. Cela permet ensuite de filtrer
+
+![docker_filter](img/docker_filter.png)
+
+
+
 
 ## Configuration de base
 
@@ -232,6 +238,8 @@ ping 192.168.200.3
 ---
 
 **LIVRABLE : capture d'écran de votre tentative de ping.**  
+
+![ping1_impossible](img/ping1_impossible.png)
 
 ---
 
@@ -248,6 +256,18 @@ ip route del default
 ip route add default via 192.168.100.2
 ```
 
+
+
+```bash
+docker exec -i Client_in_LAN /bin/bash <<- EOF  
+ip route del default
+ip route add default via 192.168.100.2
+ip route
+EOF
+```
+
+![default_route_client](img/default_route_client.png)
+
 ### Configuration du serveur dans la DMZ
 
 Dans un terminal de votre serveur dans DMZ, taper les commandes suivantes :
@@ -260,6 +280,22 @@ service nginx start
 service ssh start
 ```
 
+
+
+```bash
+docker exec -i Server_in_DMZ /bin/bash <<- EOF  
+ip route del default
+ip route add default via 192.168.200.2
+ip route
+
+service nginx start
+service ssh start
+service --status-all
+EOF
+```
+
+![dmz_route_services](img/dmz_route_services.png)
+
 Les deux dernières commandes démarrent les services Web et SSH du serveur.
 
 La communication devrait maintenant être possible entre les deux machines à travers le Firewall. Faites un nouveau test de ping, cette fois-ci depuis le serveur vers le client :
@@ -271,6 +307,10 @@ ping 192.168.100.3
 ---
 
 **LIVRABLES : captures d'écran des routes des deux machines et de votre nouvelle tentative de ping.**
+
+![pings_client_server](img/pings_client_server.png)
+
+![routes_client_server](img/routes_client_server.png)
 
 ---
 
@@ -287,6 +327,8 @@ Si votre ping passe mais que la réponse contient un _Redirect Host_, ceci indiq
 ---
 
 **LIVRABLE : capture d'écran de votre ping vers l'Internet. Un ping qui ne passe pas ou des réponses contenant des _Redirect Host_ sont acceptés.**
+
+![failing_ping_internet](img/failing_ping_internet.png)
 
 ---
 
