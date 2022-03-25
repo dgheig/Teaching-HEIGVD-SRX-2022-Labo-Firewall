@@ -131,19 +131,19 @@ _Lors de la définition d'une zone, spécifier l'adresse du sous-réseau IP avec
 
 |   Adresse IP source    | Adresse IP destination  |         Type          | Port src | Port dst | Action |
 | :--------------------: | :---------------------: | :-------------------: | :------: | :------: | :----: |
-| 192.168.100.0/24 (LAN) |       172.20.10.2       |          TCP          |    *     |    53    | Accept |
-| 192.168.100.0/24 (LAN) |       172.20.10.2       |         UDP/          |    *     |    53    | Accept |
+| 192.168.100.0/24 (LAN) |        0.0.0.0/0        |          TCP          |    *     |    53    | Accept |
+| 192.168.100.0/24 (LAN) |        0.0.0.0/0        |          UDP          |    *     |    53    | Accept |
 | 192.168.100.0/24 (LAN) | 192.168.200.0/24 (DMZ)  | ICMP Request (type 8) |          |          | Accept |
 | 192.168.200.0/24 (DMZ) | 192.168.100.0/24 (LAN)  |  ICMP Reply (type 0)  |          |          | Accept |
-| 192.168.100.0/24 (LAN) |    172.20.10.2(WAN)     | ICMP Request (type 8) |          |          | Accept |
-|    172.20.10.2(WAN)    | 192.168.100.0/24 (LAN)  |  ICMP Reply (type 0)  |          |          | Accept |
-| 192.168.100.0/24 (LAN) |    172.20.10.2(WAN)     |         ICMP          |    *     |   0,8    | Accept |
-|    172.20.10.2(WAN)    | 192.168.100.0/24 (LAN)  |         ICMP          |    *     |   0,8    | Accept |
-| 192.168.100.0/24 (LAN) |    172.20.10.2(WAN)     |       HTTP(TCP)       |    *     |    80    | Accept |
-| 192.168.100.0/24 (LAN) |    172.20.10.2(WAN)     |       HTTP(TCP)       |    *     |   8080   | Accept |
-| 192.168.100.0/24 (LAN) |    172.20.10.2(WAN)     |      HTTPS(TCP)       |    *     |   443    | Accept |
+| 192.168.100.0/24 (LAN) |     0.0.0.0/0 (WAN)     | ICMP Request (type 8) |          |          | Accept |
+|    0.0.0.0/0 (WAN)     | 192.168.100.0/24 (LAN)  |  ICMP Reply (type 0)  |          |          | Accept |
+| 192.168.100.0/24 (LAN) |     0.0.0.0/0 (WAN)     |         ICMP          |    *     |   0,8    | Accept |
+|    0.0.0.0/0 (WAN)     | 192.168.100.0/24 (LAN)  |         ICMP          |    *     |   0,8    | Accept |
+| 192.168.100.0/24 (LAN) |     0.0.0.0/0 (WAN)     |       HTTP(TCP)       |    *     |    80    | Accept |
+| 192.168.100.0/24 (LAN) |     0.0.0.0/0 (WAN)     |       HTTP(TCP)       |    *     |   8080   | Accept |
+| 192.168.100.0/24 (LAN) |     0.0.0.0/0 (WAN)     |      HTTPS(TCP)       |    *     |   443    | Accept |
 | 192.168.100.0/24 (LAN) | 192.168.200.0/24 (DMZ)  |          TCP          |    *     |    80    | Accept |
-| 192.168.200.0/24 (WAN) | 192.168.200.0/24 (DMZ)  |          TCP          |    *     |    80    | Accept |
+|    0.0.0.0/0 (WAN)     | 192.168.200.0/24 (DMZ)  |          TCP          |    *     |    80    | Accept |
 | 192.168.100.0/24 (LAN) | 192.168.200.0/24 (DMZ)  |       SSH(TCP)        |    *     |    22    | Accept |
 | 192.168.100.0/24 (LAN) | 192.168.100.2(Firewall) |       SSH(TCP)        |    *     |    22    | Accept |
 |       0.0.0.0/0        |        0.0.0.0/0        |           *           |    *     |    *     |  Deny  |
@@ -508,7 +508,15 @@ Commandes nftables :
 ---
 
 ```bash
-LIVRABLE : Commandes nftables
+# LIVRABLE : Commandes nftables
+nft add table ip filter  # family: ip, name: filter
+# Create chains for input and output
+nft 'add chain ip filter forward {type filter hook forward priority 0 ; policy drop;}'
+# Add rules to allow traffic
+nft add rule ip filter forward icmp type {0, 8} ip saddr 192.168.100.0/24 ip daddr 192.168.200.0/24 accept
+nft add rule ip filter forward icmp type 8 ip saddr 192.168.100.0/24 accept
+nft add rule ip filter forward icmp type 0 ip daddr 192.168.100.0/24 ip saddr 0.0.0.0/0 accept
+nft add rule ip filter forward icmp type {0, 8} ip saddr 192.168.200.0/24 ip daddr 192.168.100.0/24 accept
 ```
 ---
 
@@ -524,6 +532,8 @@ ping 8.8.8.8
 ```
 Faire une capture du ping.
 
+![ping_client_wan](img/ping_client_wan.png)
+
 Vérifiez aussi la route entre votre client et le service `8.8.8.8`. Elle devrait partir de votre client et traverser votre Firewall :
 
 ```bash
@@ -534,6 +544,8 @@ traceroute 8.8.8.8
 ---
 **LIVRABLE : capture d'écran du traceroute et de votre ping vers l'Internet. Il ne devrait pas y avoir des _Redirect Host_ dans les réponses au ping !**
 
+![traceroute_client_wan](img/traceroute_client_wan.png)
+
 ---
 
 <ol type="a" start="9">
@@ -542,20 +554,22 @@ traceroute 8.8.8.8
 </ol>
 
 
-| De Client\_in\_LAN à | OK/KO | Commentaires et explications |
-| :---                 | :---: | :---                         |
-| Interface DMZ du FW  |       |                              |
-| Interface LAN du FW  |       |                              |
-| Client LAN           |       |                              |
-| Serveur WAN          |       |                              |
+| De Client\_in\_LAN à | OK/KO | Commentaires et explications            |
+| :------------------- | :---: | :-------------------------------------- |
+| Interface DMZ du FW  |  Ok   | Il n'y a pas de règle output qui bloque |
+| Interface LAN du FW  |  Ok   | Il n'y a pas de règle input qui bloque  |
+| Client LAN           |  Ok   | auto-ping                               |
+| Serveur DMZ          |  OK   |                                         |
+| Serveur WAN          |  Ok   |                                         |
 
 
-| De Server\_in\_DMZ à | OK/KO | Commentaires et explications |
-| :---                 | :---: | :---                         |
-| Interface DMZ du FW  |       |                              |
-| Interface LAN du FW  |       |                              |
-| Serveur DMZ          |       |                              |
-| Serveur WAN          |       |                              |
+| De Server\_in\_DMZ à | OK/KO | Commentaires et explications                                 |
+| :------------------- | :---: | :----------------------------------------------------------- |
+| Interface DMZ du FW  |  OK   | Il n'y a pas de règle output qui bloque                      |
+| Interface LAN du FW  |  OK   | Il n'y a que de règle input qui bloque                       |
+| Client LAN           |  OK   | Il y a une règle qui                                         |
+| Serveur DMZ          |  OK   | auto-ping                                                    |
+| Serveur WAN          |  KO   | On autorise que depuis Client vers WAN, mais la DMZ n'as pas d'autorisation |
 
 
 ## Règles pour le protocole DNS
